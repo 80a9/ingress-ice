@@ -79,7 +79,15 @@ function login(l, p) {
       }
 
       if (page.url.substring(0,44) === 'https://accounts.google.com/signin/challenge') {
-        announce('Using two-step verification, please enter your code:');
+        var azApprovalMsg = page.evaluate(function () {
+          return document.getElementById('azApprovalMsg').value;
+        });
+        if (azApprovalMsg) {
+          announce(azApprovalMsg);
+          announce('Please enter to continue after sign in with your phone.');
+        } else {
+          announce('Using two-step verification, please enter your code:');
+        }
         twostep = system.stdin.readLine();
       }
 
