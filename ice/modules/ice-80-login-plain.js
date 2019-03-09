@@ -62,6 +62,10 @@ function login(l, p) {
     });
     window.setTimeout(function () {
       announce('Validating login credentials...');
+      if (page.url.substring(0,43) === 'https://accounts.google.com/signin/rejected') {
+        quit("Couldn't sign you in: The browser you're using doesn't support JavaScript, or has JavaScript turned off.");
+      }
+
       if (page.url.substring(0,40) === 'https://accounts.google.com/ServiceLogin') {
         quit('login failed: wrong email and/or password');
       }
