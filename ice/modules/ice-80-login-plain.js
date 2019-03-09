@@ -80,7 +80,7 @@ function login(l, p) {
 
       if (page.url.substring(0,44) === 'https://accounts.google.com/signin/challenge') {
         var azApprovalMsg = page.evaluate(function () {
-          return document.getElementById('azApprovalMsg').value;
+          return document.getElementById('azApprovalMsg').textContent;
         });
         if (azApprovalMsg) {
           announce(azApprovalMsg);
