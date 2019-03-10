@@ -79,30 +79,61 @@ function login(l, p) {
       }
 
       if (page.url.substring(0,44) === 'https://accounts.google.com/signin/challenge') {
-        var azApprovalMsg = page.evaluate(function () {
-          return document.getElementById('azApprovalMsg').textContent;
-        });
-        if (azApprovalMsg) {
-          announce(azApprovalMsg);
-          announce('Please enter to continue after sign in with your phone.');
-        } else {
-          announce('Using two-step verification, please enter your code:');
+        var totpPin = page.evaluate(function () { return document.getElementById('totpPin'); });
+        if (!totpPin) {
+          azApprovalMsg = page.evaluate(function () { return document.getElementById('azApprovalMsg').textContent; });
+          if (azApprovalMsg) {
+            awaitApproval(azApprovalMsg);
+          }
+          else {
+            announce('No approval message found. Submit a challenge request.');
+            page.evaluate(function () { document.getElementById('challenge').submit(); });
+            window.setTimeout(function () {
+              azApprovalMsg = page.evaluate(function () { return document.getElementById('azApprovalMsg').textContent; });
+              if (azApprovalMsg) {
+                awaitApproval(azApprovalMsg);
+              }
+              else {
+                window.setTimeout(afterPlainLogin, loginTimeout);
+              }
+            }, loginTimeout);
+          }
         }
-        twostep = system.stdin.readLine();
+        else {
+          announce('Using two-step verification, please enter your code:');
+          twostep = system.stdin.readLine();
+        }
+        if (twostep) {
+          page.evaluate(function (code) {
+            document.getElementById('totpPin').value = code;
+          }, twostep);
+          page.evaluate(function () {
+            document.getElementById('submit').click();
+            document.getElementById('challenge').submit();
+          });
+        }
+        window.setTimeout(afterPlainLogin, loginTimeout);
       }
-
-      if (twostep) {
-        page.evaluate(function (code) {
-          document.getElementById('totpPin').value = code;
-        }, twostep);
-        page.evaluate(function () {
-          document.getElementById('submit').click();
-          document.getElementById('challenge').submit();
-        });
+      else {
+        window.setTimeout(afterPlainLogin, loginTimeout);
       }
-      window.setTimeout(afterPlainLogin, loginTimeout);
     }, loginTimeout)
   }, loginTimeout / 10);
+}
+
+/**
+ * await smartphone approval
+ * @since 4.3.4
+ */
+function awaitApproval(azApprovalMsg) {
+  announce(azApprovalMsg);
+  announce('Please enter to continue after sign in with your phone:');
+  system.stdin.readLine();
+  page.evaluate(function () {
+    document.getElementById('submit').click();
+    document.getElementById('challenge').submit();
+  });
+  window.setTimeout(afterPlainLogin, loginTimeout);
 }
 
 /**
